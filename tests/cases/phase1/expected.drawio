@@ -3,8 +3,8 @@
 <mxCell id="1" parent="0" />
 <mxCell id="margin" value="" style="strokeColor=none;fillColor=#ffffff;" vertex="1" parent="1"><mxGeometry x="-20" y="-120" width="1340" height="1220" as="geometry" /></mxCell>
 <mxCell id="frame" value="" style="rounded=0;fillColor=none;" vertex="1" parent="1"><mxGeometry x="0" y="-100" width="1300" height="1180" as="geometry" /></mxCell>
-<mxCell id="title" value="Phase 1: Ghost on a VM" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=top;spacing=0;fontSize=24;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="12" y="-88" width="1276" height="30" as="geometry" /></mxCell>
-<mxCell id="description" value="the-well-architected-cloud.com/blog" style="text;html=0;whiteSpace=wrap;align=left;verticalAlign=top;spacing=0;fontSize=24;" vertex="1" parent="1"><mxGeometry x="12" y="-58.00000000000001" width="1276" height="30" as="geometry" /></mxCell>
+<mxCell id="title" value="Phase 1: Ghost on a VM" style="text;html=0;whiteSpace=nowrap;align=left;verticalAlign=top;spacing=0;fontSize=24;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="12" y="-88" width="1276" height="30" as="geometry" /></mxCell>
+<mxCell id="description" value="the-well-architected-cloud.com/blog" style="text;html=0;whiteSpace=nowrap;align=left;verticalAlign=top;spacing=0;fontSize=24;" vertex="1" parent="1"><mxGeometry x="12" y="-58.00000000000001" width="1276" height="30" as="geometry" /></mxCell>
 <mxCell id="g-vpc" value="" style="rounded=0;fillColor=none;strokeColor=#8C4FFF;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_vpc2;" vertex="1" parent="1"><mxGeometry x="470" y="250" width="540" height="580" as="geometry" /></mxCell>
 <mxCell id="gt-vpc" value="VPC - private subnet (no inbound from internet)" style="text;html=0;whiteSpace=nowrap;fontSize=12;fontColor=#232F3E;align=left;verticalAlign=top;spacing=0;fontStyle=1;fontColor=#8C4FFF;" vertex="1" parent="1"><mxGeometry x="510" y="255" width="330" height="30" as="geometry" /></mxCell>
 <mxCell id="n-viewer" value="" style="fillColor=none;strokeColor=none;" vertex="1" parent="1"><mxGeometry x="100" y="320" width="120" height="120" as="geometry" /></mxCell>
