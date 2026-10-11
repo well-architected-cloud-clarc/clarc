@@ -1,7 +1,7 @@
 //! Cloud look for the shared drawio exporter: icons with labels below, themed group frames, labelled edges.
 use crate::catalog::{GroupLook, Look, Theme};
 use crate::compose::{Composed, GROUP_ICON_PX, ICON_PX, ICON_TOP_PX, LABEL_GAP_PX};
-use c43::drawio::export::{esc, vertex, EdgeDraw, Styler};
+use c43_layout::drawio::export::{esc, vertex, EdgeDraw, Styler};
 use c43_layout::js::num;
 use c43_layout::model::{Kind, PortOut, Side};
 use indexmap::IndexMap;

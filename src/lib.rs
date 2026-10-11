@@ -29,6 +29,6 @@ pub fn render(input: &Input, theme: Theme) -> Result<Rendered, String> {
     let r = lay_out(&c)?;
     warnings.extend(r.metrics.violations.iter().map(|v| format!("{}: {}", v.rule, v.detail)));
     warnings.extend(r.metrics.ignored_hints.iter().map(|h| format!("placement hint not satisfied: {h}")));
-    let xml = c43::drawio::render_styled(&r.layout, c.graph.title.as_deref(), c.graph.description.as_deref(), render::styler(theme, &c, r.layout.s * c43::drawio::text::UNIT_PX, r.layout.nodes.iter().map(|n| (n.id.clone(), (n.col, n.row))).collect()));
+    let xml = c43_layout::drawio::render_styled(&r.layout, c.graph.title.as_deref(), c.graph.description.as_deref(), render::styler(theme, &c, r.layout.s * c43_layout::drawio::text::UNIT_PX, r.layout.nodes.iter().map(|n| (n.id.clone(), (n.col, n.row))).collect()));
     Ok(Rendered { xml, warnings })
 }

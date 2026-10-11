@@ -1,7 +1,7 @@
 //! Input document → engine graph and hints (sizes from labels, placement from node hints).
 use crate::catalog::{group_look, resolve, GroupLook, Look, Theme};
 use crate::input::{EdgeKind, Input, LineStyle};
-use c43::drawio::text::{text_width, wrap, LABEL_PX, LINE_H, UNIT_PX};
+use c43_layout::drawio::text::{text_width, wrap, LABEL_PX, LINE_H, UNIT_PX};
 use c43_layout::model::{Hints, InputEdge, InputGraph, InputGroup, InputNode, Kind, KindHint, PlacementHint, Rel, SizeHints};
 use indexmap::IndexMap;
 
@@ -111,6 +111,7 @@ pub fn compose(input: &Input, theme: Theme) -> Result<Composed, String> {
             .map(|g| (g.id.clone(), (text_width(label_of(&g.id, &g.label), LABEL_PX, true) + LABEL_PX / 2.0 + GROUP_ICON_PX) / UNIT_PX))
             .collect(),
         title_height: (LABEL_PX * LINE_H / UNIT_PX).ceil(),
+        title_bottom: false,
     };
     let graph = InputGraph {
         title: input.title.clone(),
