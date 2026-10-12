@@ -278,3 +278,30 @@ fn agentic_help_prints_the_example_for_the_theme_and_needs_no_input() {
     let az = run(&["--azure", "--agentic-help"], "");
     assert!(String::from_utf8_lossy(&az.stdout).ends_with(&clarc::example::example_text(Theme::Azure)));
 }
+
+#[test]
+fn all_text_is_elms_sans_with_the_font_data_once_per_family_and_no_bold() {
+    CASES.iter().for_each(|(name, theme, _)| {
+        let xml = clarc::render(&input(name), *theme).unwrap().xml;
+        let texts: Vec<&str> = xml.lines().filter(|l| l.contains("fontSize=")).collect();
+        assert!(!texts.is_empty(), "{name}");
+        assert!(texts.iter().all(|l| l.contains("fontFamily=Elms Sans;") || l.contains("fontFamily=Elms Sans Thin;")), "{name}: text without Elms Sans");
+        assert!(!xml.contains("fontStyle=1"), "{name}: bold style");
+        ["Elms Sans;", "Elms Sans Thin;"].iter().for_each(|f| {
+            let n = xml.lines().filter(|l| l.contains(&format!("fontFamily={f}")) && l.contains("fontSource=")).count();
+            assert_eq!(n, 1, "{name}: font data of {f} declared {n} times");
+        });
+    });
+}
+
+#[test]
+fn node_labels_use_the_heavier_face_and_edge_labels_the_thin_one() {
+    CASES.iter().for_each(|(name, theme, _)| {
+        let xml = clarc::render(&input(name), *theme).unwrap().xml;
+        let cells = |prefix: &str| xml.lines().filter(|l| l.contains(&format!("id=\"{prefix}")) && l.contains("fontSize=")).collect::<Vec<_>>();
+        let nodes = cells("l-");
+        assert!(!nodes.is_empty(), "{name}");
+        assert!(nodes.iter().all(|l| l.contains("fontFamily=Elms Sans;")), "{name}: node label not in the heavier face");
+        assert!(xml.lines().filter(|l| l.contains("edgeStyle") || l.contains("endArrow") || l.contains("strokeWidth=2;")).filter(|l| l.contains("fontSize=")).all(|l| l.contains("fontFamily=Elms Sans Thin;")), "{name}: edge label not thin");
+    });
+}

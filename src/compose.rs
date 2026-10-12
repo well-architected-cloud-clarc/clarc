@@ -1,7 +1,8 @@
 //! Input document → engine graph and hints (sizes from labels, placement from node hints).
 use crate::catalog::{group_look, resolve, GroupLook, Look, Theme};
 use crate::input::{EdgeKind, Input, LineStyle};
-use c43_layout::drawio::text::{text_width, wrap, LABEL_PX, LINE_H, UNIT_PX};
+use crate::fonts::NAME_FACE;
+use c43_layout::drawio::text::{text_width_in, wrap_in, LABEL_PX, LINE_H, UNIT_PX};
 use c43_layout::model::{Hints, InputEdge, InputGraph, InputGroup, InputNode, Kind, KindHint, PlacementHint, Rel, SizeHints};
 use indexmap::IndexMap;
 
@@ -44,7 +45,7 @@ fn side_for(label: &str, icon: bool) -> f64 {
     let fits = |side: f64| {
         let w = side * UNIT_PX - 8.0;
         let room = if icon { side * UNIT_PX - ICON_TOP_PX - ICON_PX - LABEL_GAP_PX } else { side * UNIT_PX - 8.0 };
-        wrap(label, w, LABEL_PX, false).is_some_and(|ls| (!icon || ls.len() <= MAX_LABEL_LINES) && ls.len() as f64 * LABEL_PX * LINE_H <= room)
+        wrap_in(label, w, LABEL_PX, &NAME_FACE).is_some_and(|ls| (!icon || ls.len() <= MAX_LABEL_LINES) && ls.len() as f64 * LABEL_PX * LINE_H <= room)
     };
     let side = (0..).map(|i| MIN_SIDE + i as f64).take_while(|s| icon || *s <= NOTE_MAX_SIDE).find(|s| fits(*s));
     // notes are bounded so that one long text does not blow up every node
@@ -108,7 +109,7 @@ pub fn compose(input: &Input, theme: Theme) -> Result<Composed, String> {
         group_title: input
             .groups
             .iter()
-            .map(|g| (g.id.clone(), (text_width(label_of(&g.id, &g.label), LABEL_PX, true) + LABEL_PX / 2.0 + GROUP_ICON_PX) / UNIT_PX))
+            .map(|g| (g.id.clone(), (text_width_in(label_of(&g.id, &g.label), LABEL_PX, &NAME_FACE) + LABEL_PX / 2.0 + GROUP_ICON_PX) / UNIT_PX))
             .collect(),
         title_height: (LABEL_PX * LINE_H / UNIT_PX).ceil(),
         title_bottom: false,

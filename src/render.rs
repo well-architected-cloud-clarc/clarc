@@ -1,7 +1,9 @@
 //! Cloud look for the shared drawio exporter: icons with labels below, themed group frames, labelled edges.
 use crate::catalog::{GroupLook, Look, Theme};
 use crate::compose::{Composed, GROUP_ICON_PX, ICON_PX, ICON_TOP_PX, LABEL_GAP_PX};
+use crate::fonts::{self, NAME_FACE};
 use c43_layout::drawio::export::{esc, vertex, EdgeDraw, Styler};
+use c43_layout::drawio::text::wrap_in;
 use c43_layout::js::num;
 use c43_layout::model::{Kind, PortOut, Side};
 use indexmap::IndexMap;
@@ -61,10 +63,12 @@ pub fn styler<'a>(theme: Theme, c: &'a Composed, side_px: f64, cells: IndexMap<S
             let look = c.nodes.get(&n.id).copied().unwrap_or(Look::Note);
             let id = format!("n-{}", esc(&n.id));
             let (x, y, w) = (n.x * u, n.y * u, n.size * u);
-            let label = ls.iter().map(|l| esc(l)).collect::<Vec<_>>().join("&#xa;");
+            // the engine wraps for Helvetica; wrap again for the font drawn
+            let own = wrap_in(&n.label, w - 8.0, FONT, &NAME_FACE);
+            let label = own.as_deref().unwrap_or(ls).iter().map(|l| esc(l)).collect::<Vec<_>>().join("&#xa;");
             if look == Look::Note {
                 // the note is the node: bordered, label inside
-                let style = format!("rounded=0;html=0;whiteSpace=wrap;align=left;verticalAlign=top;spacing=6;fontSize={};fontColor={TEXT_COLOR};strokeColor={NOTE_BORDER};fillColor=#ffffff;", num(FONT));
+                let style = format!("rounded=0;html=0;whiteSpace=wrap;align=left;verticalAlign=top;spacing=6;{}fontSize={};fontColor={TEXT_COLOR};strokeColor={NOTE_BORDER};fillColor=#ffffff;", fonts::style(true), num(FONT));
                 return vec![vertex(&id, &label, &style, x, y, w, w)];
             }
             // invisible square the edges attach to; the icon and the label sit inside it
@@ -73,7 +77,7 @@ pub fn styler<'a>(theme: Theme, c: &'a Composed, side_px: f64, cells: IndexMap<S
             vec![
                 vertex(&id, "", "fillColor=none;strokeColor=none;", x, y, w, w),
                 vertex(&format!("i-{}", esc(&n.id)), "", &icon_style(theme, look), icon_x, y + ICON_TOP_PX, ICON_PX, ICON_PX),
-                text_cell(&format!("l-{}", esc(&n.id)), &label, x, label_y, w, y + w - label_y, "align=center;verticalAlign=top;spacing=0;"),
+                text_cell(&format!("l-{}", esc(&n.id)), &label, x, label_y, w, y + w - label_y, &format!("align=center;verticalAlign=top;spacing=0;{}", fonts::style(true))),
             ]
         }),
         group: Box::new(move |g, u| {
@@ -83,7 +87,7 @@ pub fn styler<'a>(theme: Theme, c: &'a Composed, side_px: f64, cells: IndexMap<S
             let indent = if theme == Theme::Aws && look.aws_icon.is_some() { GROUP_ICON_PX } else { 0.0 };
             vec![
                 vertex(&format!("g-{}", esc(&g.id)), "", &style, g.x * u, g.y * u, g.w * u, g.h * u),
-                text_cell(&format!("gt-{}", esc(&g.id)), &esc(&g.label), t.x * u + indent, t.y * u, t.w * u - indent, t.h * u, &format!("align=left;verticalAlign=top;spacing=0;fontStyle=1;fontColor={color};")),
+                text_cell(&format!("gt-{}", esc(&g.id)), &esc(&g.label), t.x * u + indent, t.y * u, t.w * u - indent, t.h * u, &format!("align=left;verticalAlign=top;spacing=0;{}fontColor={color};", fonts::style(true))),
             ]
         }),
         edge: Box::new(move |e| {
@@ -101,7 +105,7 @@ pub fn styler<'a>(theme: Theme, c: &'a Composed, side_px: f64, cells: IndexMap<S
             let on_icon = |p: &PortOut, other: &PortOut| if level && p.count == 1 { slot(other) } else { slot(p) };
             let end = |id: &str, p: &PortOut, other: &PortOut| if icon(id) { pull(p.side, slot(p), on_icon(p, other), side_px) } else { (0.0, 0.0) };
             EdgeDraw {
-                style: format!("strokeWidth=2;fontSize={};labelBackgroundColor=#ffffff;{dashed}", num(EDGE_FONT)),
+                style: format!("strokeWidth=2;{}fontSize={};labelBackgroundColor=#ffffff;{dashed}", fonts::style(false), num(EDGE_FONT)),
                 moved: Some((end(&e.from, &e.src, &e.dst), end(&e.to, &e.dst, &e.src))),
                 straight: clear,
             }
