@@ -4,7 +4,7 @@ name: release
 
 on:
   push:
-    branches: [main, g7rvw-gh-release]  # TODO g7rvw: drop the branch once the workflow is proven
+    branches: [main]
   pull_request:
 
 concurrency:
