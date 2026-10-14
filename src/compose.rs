@@ -126,5 +126,5 @@ pub fn compose(input: &Input, theme: Theme) -> Result<Composed, String> {
         .iter()
         .filter_map(|e| e.style.as_ref().map(|s| ((e.from.clone(), e.to.clone()), matches!(s, LineStyle::Dashed))))
         .collect();
-    Ok(Composed { graph, hints: Hints { kinds, placement, sizes, gravity: true }, nodes, groups, warnings, line })
+    Ok(Composed { graph, hints: Hints { kinds, placement, sizes, gravity: true, pull_sources: false }, nodes, groups, warnings, line })
 }

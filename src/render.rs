@@ -38,9 +38,10 @@ fn group_frame(theme: Theme, look: &GroupLook) -> (String, &'static str) {
     }
 }
 
-/// fraction along a node side where the engine put a port
+/// fraction along a node side where the engine put a port: its own slot, or the facing slot it was moved to
 fn slot(p: &PortOut) -> f64 {
-    (2 * p.index + 1) as f64 / (2 * p.count) as f64
+    let (index, count) = p.align.unwrap_or((p.index, p.count));
+    (2 * index + 1) as f64 / (2 * count) as f64
 }
 
 /// connection offsets that pull an edge end in from the node square to the icon it belongs to;
