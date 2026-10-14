@@ -39,6 +39,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: cachix/install-nix-action@v31
 
+      # macOS ships bash 3.2, which nixpkgs refuses; make nix-shell use a nix bash
+      - name: nix bash
+        run: echo "NIX_BUILD_SHELL=$(nix-build ci.nix -A bash --no-out-link)/bin/bash" >> "$GITHUB_ENV"
+
       - name: build
         run: nix-shell ci.nix ${{ matrix.attr }} --run 'cargo build --release'
 

@@ -19,5 +19,5 @@ let
 in pkgs.mkShellNoCC {
   # patchelf resets the nix interpreter/rpath of linux binaries so they run on any distro
   packages = [ pkgs.rustc pkgs.cargo ] ++ pkgs.lib.optional pkgs.stdenv.isLinux pkgs.patchelf;
-  passthru = { inherit windows; };
+  passthru = { inherit windows; bash = pkgs.bashInteractive; };
 }
