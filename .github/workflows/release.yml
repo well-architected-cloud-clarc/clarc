@@ -1,0 +1,116 @@
+# Every push to main publishes binaries as the rolling prerelease `latest`; pull requests only build and test.
+# All cargo commands run inside the project's nix environment (ci.nix); windows is cross-compiled from linux.
+name: release
+
+on:
+  push:
+    branches: [main, g7rvw-gh-release]  # TODO g7rvw: drop the branch once the workflow is proven
+  pull_request:
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v31
+      - run: nix-shell ci.nix --run 'cargo build --release && cargo test'
+
+  build:
+    needs: test
+    if: github.event_name == 'push'
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - { target: x86_64-unknown-linux-gnu, os: ubuntu-latest, attr: "", exe: clarc, ext: tar.gz }
+          - { target: aarch64-unknown-linux-gnu, os: ubuntu-24.04-arm, attr: "", exe: clarc, ext: tar.gz }
+          - { target: aarch64-apple-darwin, os: macos-latest, attr: "", exe: clarc, ext: tar.gz }
+          - { target: x86_64-apple-darwin, os: macos-15-intel, attr: "", exe: clarc, ext: tar.gz }
+          - { target: x86_64-pc-windows-gnu, os: ubuntu-latest, attr: "-A windows", exe: clarc.exe, ext: zip }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v31
+
+      - name: build
+        run: nix-shell ci.nix ${{ matrix.attr }} --run 'cargo build --release'
+
+      - name: locate binary
+        run: |
+          bin=target/release/${{ matrix.exe }}
+          [ -f "$bin" ] || bin=target/${{ matrix.target }}/release/${{ matrix.exe }}
+          mkdir -p dist && cp "$bin" dist/${{ matrix.exe }}
+          echo "BIN=dist/${{ matrix.exe }}" >> "$GITHUB_ENV"
+
+      # nix links against /nix/store; make the binary depend on system libraries only
+      - name: make linux binary portable
+        if: contains(matrix.target, 'linux')
+        run: |
+          case "${{ matrix.target }}" in
+            x86_64*) interp=/lib64/ld-linux-x86-64.so.2 ;;
+            aarch64*) interp=/lib/ld-linux-aarch64.so.1 ;;
+          esac
+          nix-shell ci.nix --run "patchelf --set-interpreter $interp --remove-rpath $BIN"
+          ! readelf -lWd "$BIN" | grep -q /nix/store
+
+      - name: make macos binary portable
+        if: contains(matrix.target, 'apple')
+        run: |
+          otool -L "$BIN" | awk 'NR>1 && /\/nix\/store\// {print $1}' | while read -r lib; do
+            install_name_tool -change "$lib" "/usr/lib/$(basename "$lib")" "$BIN"
+          done
+          codesign --force -s - "$BIN"
+          ! otool -L "$BIN" | grep -q /nix/store
+
+      - name: smoke test
+        run: |
+          case "${{ matrix.target }}" in
+            *linux*) docker run --rm -v "$PWD/dist:/w:ro" debian:stable-slim /w/clarc --agentic-help ;;
+            *apple*) "$BIN" --agentic-help ;;
+            *windows*) [ "$(head -c2 "$BIN")" = MZ ] ;;
+          esac
+
+      - name: archive
+        run: |
+          name=clarc-${GITHUB_SHA::7}-${{ matrix.target }}
+          mkdir -p "$name/media/fonts"
+          cp "$BIN" LICENSE README.md "$name/"
+          cp media/fonts/LICENSE-elms-sans.txt "$name/media/fonts/"
+          case "${{ matrix.ext }}" in
+            zip) zip -qr "$name.zip" "$name" ;;
+            *) tar czf "$name.tar.gz" "$name" ;;
+          esac
+          echo "ARCHIVE=$name.${{ matrix.ext }}" >> "$GITHUB_ENV"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.target }}
+          path: ${{ env.ARCHIVE }}
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: assets
+          merge-multiple: true
+      - name: checksums
+        run: cd assets && sha256sum clarc-* > SHA256SUMS
+      - name: replace the latest release
+        run: |
+          gh release delete latest --cleanup-tag --yes || true
+          gh release create latest assets/* --prerelease --target "$GITHUB_SHA" \
+            --title "latest (${GITHUB_SHA::7})" --notes "Built from main at $GITHUB_SHA."
