@@ -23,6 +23,7 @@ our first test case is ~/projects/ghost that will need to render architecture fo
 - Binary acquisition: order of preference is `clarc` on PATH, then the user-level cached copy (`~/.local/share/clarc/clarc`), then download of the matching archive from the rolling `latest` GitHub release of the clarc repo (assets `clarc-<sha>-<target>`, with `SHA256SUMS`; verify checksum) into that cache. OS/arch picks the target. A cached copy is never refreshed automatically (delete it to re-download); while developing, the freshly built binary is copied over the cache after each rebuild so other sessions use it. Rejected: requiring a manual install only, building from source.
 - First test case: `~/projects/ghost` (repo "ghosted"). Phase 2 is reproduced from `phase2/iac` as the check of the skill, then the same flow renders phase 3 (`phase3/`: serverless Ghost behind CloudFront with Lambda function URLs, content and SQLite-store buckets, EventBridge schedules, CloudWatch, SSM, SMTP provider) from code plus discussion. Phase 3 facts come from the user/docs, never from the skill. Acceptance: the user iterates hints on the rendered image until satisfied; rendering defects found on the way (icon/label size, edge ends, port spacing) are fixed in clarc and the engine, not worked around in the JSON.
 
+- Distribution: the repo itself is the plugin marketplace (manifest at the repo root, one plugin pointing at the plugin folder), so the skill installs straight from GitHub as well as from a local checkout or per session; the manifest carries a description and the owner's full name. The drawio CLI stays optional and is never installed by the skill (README says so). Rejected: manifest inside the plugin folder (not installable from GitHub).
 - Demo and documentation: the repo README presents the tool (usage, input model, install from the rolling release or cargo) and the skill (workflow, how to enable it in a session) and embeds an animated demo of building the phase 3 diagram by conversation (plus a video version). The demo is a mock Claude Code session on the left (user requests typed on a dark-grey bar, skill/clarc calls, trimmed replies) and the diagram on the right, updating after each reply; about 30 s, 1400 px wide, followed by a 10 s hold on the finished diagram; steps that changed nothing are left out. It is generated from a recorded step list (request, reply, graph per step) by a script kept with it, so it can be regenerated when rendering changes. Rejected: screen-recorded terminal, full-length replies.
 
 ## Phase 2 reference model (read from ghost `phase2/iac/*.tf`; expected content of the first test diagram)
@@ -35,11 +36,12 @@ our first test case is ~/projects/ghost that will need to render architecture fo
 
 ## Implementation (abstract)
 
-- Plugin manifest and marketplace entry renamed to clarc; single skill whose SKILL.md carries: trigger description, the workflow (inspect project -> `clarc --agentic-help` -> write JSON -> run clarc -> review -> adjust hints), modelling guidance (node vs group vs data/nf edge), and the binary bootstrap procedure.
+- Plugin manifest and marketplace entry renamed to clarc (marketplace manifest at the repo root); single skill whose SKILL.md carries: trigger description, the workflow (inspect project -> `clarc --agentic-help` -> write JSON -> run clarc -> review -> adjust hints), modelling guidance (node vs group vs data/nf edge), and the binary bootstrap procedure.
 - Any bootstrap helper is a small script shipped with the skill; no layout code remains in the plugin.
 - Bootstrap helper: PATH, cache, release download in that order (see decisions); prints the path of the usable binary.
 - Rendering fixes made on the way live in clarc (icon and label sizes, edge ends under labels) and in the layout engine repo (port snapping rule); the engine repo is pinned by git rev in clarc and the pin is bumped to the commit carrying the change.
 - The demo is built by rendering every recorded step with clarc and drawio, then composing frames (mock terminal + diagram) and encoding GIF and MP4; it lives in a `demo/` folder in the repo.
 - Validation of the skill is by running it against the ghost repo, not unit tests; repo `cargo build --release` and `cargo test` must stay green (the clarc goldens are regenerated whenever rendering or engine behaviour changes).
+
 
 
