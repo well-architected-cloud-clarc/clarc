@@ -1,0 +1,15 @@
+{
+  "name": "clarc",
+  "owner": {
+    "name": "Sascha Fedorenko"
+  },
+  "metadata": {
+    "description": "Cloud architecture diagrams (drawio) from a service graph, via clarc"
+  },
+  "plugins": [
+    {
+      "name": "clarc",
+      "source": "./claude-plugin/clarc"
+    }
+  ]
+}

@@ -49,11 +49,11 @@ The plugin lives in `claude-plugin/clarc`. The skill turns "draw the architectur
 Use it in a session:
 
 ```
-/plugin marketplace add /path/to/clarc/claude-plugin
+/plugin marketplace add well-architected-cloud-clarc/clarc
 /plugin install clarc@clarc
 ```
 
-or for one session only: `claude --plugin-dir /path/to/clarc/claude-plugin/clarc`. Then ask for a diagram or run `/clarc:clarc <what to draw>`.
+A local checkout works too (`/plugin marketplace add /path/to/clarc`), and for one session only: `claude --plugin-dir /path/to/clarc/claude-plugin/clarc`. Then ask for a diagram or run `/clarc:clarc <what to draw>`.
 
 ## Reference architectures
 
