@@ -2,5 +2,9 @@
   "name": "clarc",
   "version": "0.1.0",
   "description": "Cloud architecture diagrams (drawio) from a service graph, via clarc.",
-  "author": { "name": "Sascha Fedorenko" }
+  "author": { "name": "Sascha Fedorenko" },
+  "homepage": "https://github.com/well-architected-cloud-clarc/clarc",
+  "repository": "https://github.com/well-architected-cloud-clarc/clarc",
+  "license": "MIT",
+  "keywords": ["architecture", "diagram", "aws", "azure", "drawio"]
 }
