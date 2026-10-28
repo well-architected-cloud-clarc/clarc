@@ -1,9 +1,9 @@
 //! Cloud look for the shared drawio exporter: icons with labels below, themed group frames, labelled edges.
 use crate::catalog::{GroupLook, Look, Theme};
-use crate::compose::{Composed, GROUP_ICON_PX, ICON_PX, ICON_TOP_PX, LABEL_GAP_PX};
+use crate::compose::{Composed, GROUP_ICON_PX, ICON_PX, ICON_TOP_PX, LABEL_GAP_PX, NODE_LABEL_PX};
 use crate::fonts::{self, NAME_FACE};
 use c43_layout::drawio::export::{esc, vertex, EdgeDraw, Styler};
-use c43_layout::drawio::text::wrap_in;
+use c43_layout::drawio::text::{wrap_in, LINE_H};
 use c43_layout::js::num;
 use c43_layout::model::{Kind, PortOut, Side};
 use indexmap::IndexMap;
@@ -24,8 +24,8 @@ fn icon_style(theme: Theme, look: Look) -> String {
     }
 }
 
-fn text_cell(id: &str, value: &str, x: f64, y: f64, w: f64, h: f64, extra: &str) -> String {
-    vertex(id, value, &format!("text;html=0;whiteSpace=nowrap;fontSize={};fontColor={TEXT_COLOR};{extra}", num(FONT)), x, y, w, h)
+fn text_cell(id: &str, value: &str, x: f64, y: f64, w: f64, h: f64, font: f64, extra: &str) -> String {
+    vertex(id, value, &format!("text;html=0;whiteSpace=nowrap;fontSize={};fontColor={TEXT_COLOR};{extra}", num(font)), x, y, w, h)
 }
 
 fn group_frame(theme: Theme, look: &GroupLook) -> (String, &'static str) {
@@ -45,16 +45,23 @@ fn slot(p: &PortOut) -> f64 {
 }
 
 /// connection offsets that pull an edge end in from the node square to the icon it belongs to;
-/// left and right ports sit at `on_icon` of the icon's height, not of the square's (which includes the label)
-fn pull(side: Side, own: f64, on_icon: f64, side_px: f64) -> (f64, f64) {
+/// left and right ports sit at `on_icon` of the icon's height, not of the square's (which includes the label);
+/// bottom ports sit right under the label text (`label_h`), not under the square's slack below it
+fn pull(side: Side, own: f64, on_icon: f64, side_px: f64, label_h: f64) -> (f64, f64) {
     let gap = (side_px - ICON_PX) / 2.0;
     let dy = ICON_TOP_PX + on_icon * ICON_PX - own * side_px;
     match side {
         Side::Right => (-gap, dy),
         Side::Left => (gap, dy),
         Side::Top => (0.0, ICON_TOP_PX),
-        Side::Bottom => (0.0, 0.0),
+        Side::Bottom => (0.0, (ICON_TOP_PX + ICON_PX + 2.0 * LABEL_GAP_PX + label_h - side_px).min(0.0)),
     }
+}
+
+/// height of a node's label text under its icon
+fn label_height(label: &str, side_px: f64) -> f64 {
+    let lines = wrap_in(label, side_px - 8.0, NODE_LABEL_PX, &NAME_FACE).map_or(1, |ls| ls.len());
+    lines as f64 * NODE_LABEL_PX * LINE_H
 }
 
 /// `side_px`: the node square the engine laid out
@@ -65,7 +72,8 @@ pub fn styler<'a>(theme: Theme, c: &'a Composed, side_px: f64, cells: IndexMap<S
             let id = format!("n-{}", esc(&n.id));
             let (x, y, w) = (n.x * u, n.y * u, n.size * u);
             // the engine wraps for Helvetica; wrap again for the font drawn
-            let own = wrap_in(&n.label, w - 8.0, FONT, &NAME_FACE);
+            let font = if look == Look::Note { FONT } else { NODE_LABEL_PX };
+            let own = wrap_in(&n.label, w - 8.0, font, &NAME_FACE);
             let label = own.as_deref().unwrap_or(ls).iter().map(|l| esc(l)).collect::<Vec<_>>().join("&#xa;");
             if look == Look::Note {
                 // the note is the node: bordered, label inside
@@ -78,7 +86,7 @@ pub fn styler<'a>(theme: Theme, c: &'a Composed, side_px: f64, cells: IndexMap<S
             vec![
                 vertex(&id, "", "fillColor=none;strokeColor=none;", x, y, w, w),
                 vertex(&format!("i-{}", esc(&n.id)), "", &icon_style(theme, look), icon_x, y + ICON_TOP_PX, ICON_PX, ICON_PX),
-                text_cell(&format!("l-{}", esc(&n.id)), &label, x, label_y, w, y + w - label_y, &format!("align=center;verticalAlign=top;spacing=0;{}", fonts::style(true))),
+                text_cell(&format!("l-{}", esc(&n.id)), &label, x, label_y, w, y + w - label_y, NODE_LABEL_PX, &format!("align=center;verticalAlign=top;spacing=0;{}", fonts::style(true))),
             ]
         }),
         group: Box::new(move |g, u| {
@@ -88,7 +96,7 @@ pub fn styler<'a>(theme: Theme, c: &'a Composed, side_px: f64, cells: IndexMap<S
             let indent = if theme == Theme::Aws && look.aws_icon.is_some() { GROUP_ICON_PX } else { 0.0 };
             vec![
                 vertex(&format!("g-{}", esc(&g.id)), "", &style, g.x * u, g.y * u, g.w * u, g.h * u),
-                text_cell(&format!("gt-{}", esc(&g.id)), &esc(&g.label), t.x * u + indent, t.y * u, t.w * u - indent, t.h * u, &format!("align=left;verticalAlign=top;spacing=0;{}fontColor={color};", fonts::style(true))),
+                text_cell(&format!("gt-{}", esc(&g.id)), &esc(&g.label), t.x * u + indent, t.y * u, t.w * u - indent, t.h * u, FONT, &format!("align=left;verticalAlign=top;spacing=0;{}fontColor={color};", fonts::style(true))),
             ]
         }),
         edge: Box::new(move |e| {
@@ -104,7 +112,11 @@ pub fn styler<'a>(theme: Theme, c: &'a Composed, side_px: f64, cells: IndexMap<S
                 !cells.iter().any(|(id, c)| *id != e.from && *id != e.to && c.1 == cells[&e.from].1 && c.0 > a.min(b) && c.0 < a.max(b))
             };
             let on_icon = |p: &PortOut, other: &PortOut| if level && p.count == 1 { slot(other) } else { slot(p) };
-            let end = |id: &str, p: &PortOut, other: &PortOut| if icon(id) { pull(p.side, slot(p), on_icon(p, other), side_px) } else { (0.0, 0.0) };
+            let label_h = |id: &str| {
+                let n = c.graph.nodes.iter().find(|n| n.id == id);
+                label_height(n.and_then(|n| n.label.as_deref()).unwrap_or(id), side_px)
+            };
+            let end = |id: &str, p: &PortOut, other: &PortOut| if icon(id) { pull(p.side, slot(p), on_icon(p, other), side_px, label_h(id)) } else { (0.0, 0.0) };
             EdgeDraw {
                 style: format!("strokeWidth=2;{}fontSize={};labelBackgroundColor=#ffffff;{dashed}", fonts::style(false), num(EDGE_FONT)),
                 moved: Some((end(&e.from, &e.src, &e.dst), end(&e.to, &e.dst, &e.src))),
@@ -112,5 +124,23 @@ pub fn styler<'a>(theme: Theme, c: &'a Composed, side_px: f64, cells: IndexMap<S
             }
         }),
         label_font: FONT,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn bottom_port_sits_under_the_label_not_under_the_square() {
+        // a square with slack below the label: the port is pulled up into it
+        let side_px = 200.0;
+        let label_h = label_height("CloudFront", side_px);
+        let (dx, dy) = pull(Side::Bottom, 0.5, 0.5, side_px, label_h);
+        assert_eq!(dx, 0.0);
+        assert_eq!(dy, ICON_TOP_PX + ICON_PX + 2.0 * LABEL_GAP_PX + label_h - side_px);
+        assert!(dy < 0.0);
+        // a square the label fills exactly keeps the port at its bottom
+        assert_eq!(pull(Side::Bottom, 0.5, 0.5, 100.0, 500.0).1, 0.0);
     }
 }
