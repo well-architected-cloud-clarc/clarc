@@ -1,0 +1,6 @@
+{
+  "name": "clarc",
+  "version": "0.1.0",
+  "description": "Cloud architecture diagrams (drawio) from a service graph, via clarc.",
+  "author": { "name": "Sascha Fedorenko" }
+}

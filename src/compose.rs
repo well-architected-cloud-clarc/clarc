@@ -7,10 +7,12 @@ use c43_layout::model::{Hints, InputEdge, InputGraph, InputGroup, InputNode, Kin
 use indexmap::IndexMap;
 
 /// icon side in px; the node square is larger to hold the label below it
-pub const ICON_PX: f64 = 60.0;
+pub const ICON_PX: f64 = 120.0;
 /// space above the icon and between icon and label
 pub const ICON_TOP_PX: f64 = 6.0;
 pub const LABEL_GAP_PX: f64 = 4.0;
+/// font size of the label under a node icon
+pub const NODE_LABEL_PX: f64 = 16.0;
 const MIN_SIDE: f64 = 5.0;
 const MAX_LABEL_LINES: usize = 3;
 /// a note's text may be up to this many lines where it must fit a square of at most this side
@@ -42,10 +44,11 @@ fn label_of<'a>(id: &'a str, label: &'a Option<String>) -> &'a str {
 
 /// px a node square must be so that the label fits under the icon, or None for a note (label inside)
 fn side_for(label: &str, icon: bool) -> f64 {
+    let font = if icon { NODE_LABEL_PX } else { LABEL_PX };
     let fits = |side: f64| {
         let w = side * UNIT_PX - 8.0;
         let room = if icon { side * UNIT_PX - ICON_TOP_PX - ICON_PX - LABEL_GAP_PX } else { side * UNIT_PX - 8.0 };
-        wrap_in(label, w, LABEL_PX, &NAME_FACE).is_some_and(|ls| (!icon || ls.len() <= MAX_LABEL_LINES) && ls.len() as f64 * LABEL_PX * LINE_H <= room)
+        wrap_in(label, w, font, &NAME_FACE).is_some_and(|ls| (!icon || ls.len() <= MAX_LABEL_LINES) && ls.len() as f64 * font * LINE_H <= room)
     };
     let side = (0..).map(|i| MIN_SIDE + i as f64).take_while(|s| icon || *s <= NOTE_MAX_SIDE).find(|s| fits(*s));
     // notes are bounded so that one long text does not blow up every node
