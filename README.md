@@ -43,7 +43,7 @@ The plugin lives in `claude-plugin/clarc`. The skill turns "draw the architectur
 1. It finds `clarc` (PATH, then `~/.local/share/clarc`, otherwise it downloads the `latest` release and verifies its checksum).
 2. It learns the input format from `clarc --agentic-help`.
 3. It collects the facts, either by **discovering them from code** (IaC, docs, specs) or by **generating them from a discussion** with you, for architectures that do not exist yet.
-4. It renders a first version (`.drawio`, plus a PNG when the drawio CLI is on PATH).
+4. It renders a first version (`.drawio`, plus a PNG when the drawio CLI is on PATH). The drawio CLI is optional and never installed by the skill; without it you get the `.drawio` file to open in drawio and no preview image.
 5. You drive the layout in prose ("put DNS above EventBridge", "move SQLite right of the generator"); the skill turns each wish into a hint and re-renders until you accept the image.
 
 Use it in a session:
