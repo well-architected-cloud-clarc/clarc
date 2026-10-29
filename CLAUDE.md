@@ -13,6 +13,8 @@ when a task involves a change in the neighbouring repo, the commit message shoul
 - use functional style when working with collections, e.g. instead of for-loops use iterator adapters
 - use `cargo ...` for building, testing, etc.
 
+after compilation, make sure the binary at ~/.local/share/clarc/clarc is updated since it's the one used by the skill
+
 # bug fixing
 
 a detected bug always gets a test that breaks before the fix and green after.

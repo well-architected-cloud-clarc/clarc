@@ -61,7 +61,7 @@ checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
 [[package]]
 name = "c43-layout"
 version = "0.1.0"
-source = "git+https://github.com/well-architected-cloud-clarc/c43-layout?rev=42363aeabde422b1c280c2f9b8fa5be407e66a42#42363aeabde422b1c280c2f9b8fa5be407e66a42"
+source = "git+https://github.com/well-architected-cloud-clarc/c43-layout?rev=2788bb7ba6e14f857750ea61884b841ae87aa57a#2788bb7ba6e14f857750ea61884b841ae87aa57a"
 dependencies = [
  "indexmap",
  "serde",

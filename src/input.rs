@@ -62,8 +62,25 @@ pub struct NodeHints {
     pub same_col: Option<String>,
 }
 
+/// which ports of a node side share one attachment point; inbound and outbound are counted apart, crowded = more than 2
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum JoinPorts {
+    /// every port has its own point (default)
+    #[default]
+    Off,
+    /// crowded inbound ports of a side become one
+    Inbound,
+    /// crowded outbound ports of a side become one
+    Outbound,
+    /// crowded inbound and crowded outbound ports
+    Crowded,
+    /// every node has at most one inbound and one outbound port per side, crowded or not
+    All,
+}
+
 #[derive(Debug, Clone, Default, Deserialize)]
-#[serde(deny_unknown_fields)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Input {
     pub title: Option<String>,
     pub description: Option<String>,
@@ -75,4 +92,6 @@ pub struct Input {
     /// per node id
     #[serde(default)]
     pub hints: IndexMap<String, NodeHints>,
+    #[serde(default)]
+    pub join_ports: JoinPorts,
 }
