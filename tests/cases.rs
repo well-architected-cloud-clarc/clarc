@@ -305,3 +305,35 @@ fn node_labels_use_the_heavier_face_and_edge_labels_the_thin_one() {
         assert!(xml.lines().filter(|l| l.contains("edgeStyle") || l.contains("endArrow") || l.contains("strokeWidth=2;")).filter(|l| l.contains("fontSize=")).all(|l| l.contains("fontFamily=Elms Sans Thin;")), "{name}: edge label not thin");
     });
 }
+
+fn hub(join: &str) -> clarc::input::Input {
+    let nodes = |p: &str, n: usize| (0..n).map(|i| format!(r#"{{"id":"{p}{i}","service":"lambda"}}"#)).collect::<Vec<_>>();
+    let edges = (0..4).map(|i| format!(r#"{{"from":"s{i}","to":"h"}}"#)).chain((0..3).map(|i| format!(r#"{{"from":"h","to":"t{i}"}}"#)));
+    let all = [nodes("s", 4), vec![r#"{"id":"h","service":"lambda"}"#.to_string()], nodes("t", 3)].concat().join(",");
+    clarc::parse(&format!(r#"{{"joinPorts":"{join}","nodes":[{all}],"edges":[{}]}}"#, edges.collect::<Vec<_>>().join(","))).unwrap()
+}
+
+/// distinct attachment points on the hub for inbound (`true`) or outbound edges
+fn hub_points(join: &str, inbound: bool) -> usize {
+    let r = clarc::lay_out(&compose(&hub(join), Theme::Aws).unwrap()).unwrap();
+    r.layout.edges.iter().filter(|e| if inbound { e.to == "h" } else { e.from == "h" }).map(|e| if inbound { &e.dst } else { &e.src }).map(|p| format!("{:.3},{:.3}", p.x, p.y)).collect::<std::collections::HashSet<_>>().len()
+}
+
+#[test]
+fn join_ports_modes() {
+    // (mode, inbound points, outbound points) for 4 inbound and 3 outbound edges
+    [("off", 4, 3), ("inbound", 1, 3), ("outbound", 4, 1), ("crowded", 1, 1), ("all", 1, 1)]
+        .iter()
+        .for_each(|(m, i, o)| assert_eq!((hub_points(m, true), hub_points(m, false)), (*i, *o), "{m}"));
+}
+
+#[test]
+fn joined_edges_render_without_warnings() {
+    let r = clarc::render(&hub("crowded"), Theme::Aws).unwrap();
+    assert!(r.warnings.is_empty(), "{:?}", r.warnings);
+}
+
+#[test]
+fn unknown_join_mode_is_an_error() {
+    assert!(clarc::parse(r#"{"joinPorts":"some","nodes":[]}"#).is_err());
+}

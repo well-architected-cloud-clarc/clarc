@@ -26,6 +26,8 @@ A JSON document with `title`, `description`, optional `groups`, `nodes`, `edges`
 - An edge is a data flow by default and flows left to right. `"kind": "nf"` marks a non-functional link (DNS, monitoring, identity, configuration, image pull); those flow top to bottom and are dashed.
 - Hints are suggestions honoured when possible, keyed by node: `start` (the left-most node, at most one), `leftOf`, `rightOf`, `above`, `below`, `sameRow`, `sameCol`.
 
+- `joinPorts` (optional, default `off`) makes crowded node sides tidier: `inbound`, `outbound` or `crowded` (both) merge the inbound/outbound edges of a side that has more than 2 into one attachment point; `all` merges regardless of count.
+
 Layout, edge routing, icon sizing and theming are done by clarc; nothing is placed by hand.
 
 ### Install

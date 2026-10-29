@@ -1,6 +1,6 @@
 //! Input document → engine graph and hints (sizes from labels, placement from node hints).
 use crate::catalog::{group_look, resolve, GroupLook, Look, Theme};
-use crate::input::{EdgeKind, Input, LineStyle};
+use crate::input::{EdgeKind, Input, JoinPorts, LineStyle};
 use crate::fonts::NAME_FACE;
 use c43_layout::drawio::text::{text_width_in, wrap_in, LABEL_PX, LINE_H, UNIT_PX};
 use c43_layout::model::{Hints, InputEdge, InputGraph, InputGroup, InputNode, Kind, KindHint, PlacementHint, Rel, SizeHints};
@@ -53,6 +53,17 @@ fn side_for(label: &str, icon: bool) -> f64 {
     let side = (0..).map(|i| MIN_SIDE + i as f64).take_while(|s| icon || *s <= NOTE_MAX_SIDE).find(|s| fits(*s));
     // notes are bounded so that one long text does not blow up every node
     side.unwrap_or(NOTE_MAX_SIDE)
+}
+
+fn join_ports(j: JoinPorts) -> c43_layout::model::JoinPorts {
+    let flags = |inbound, outbound, all| c43_layout::model::JoinPorts { inbound, outbound, all };
+    match j {
+        JoinPorts::Off => flags(false, false, false),
+        JoinPorts::Inbound => flags(true, false, false),
+        JoinPorts::Outbound => flags(false, true, false),
+        JoinPorts::Crowded => flags(true, true, false),
+        JoinPorts::All => flags(false, false, true),
+    }
 }
 
 pub fn compose(input: &Input, theme: Theme) -> Result<Composed, String> {
@@ -129,5 +140,5 @@ pub fn compose(input: &Input, theme: Theme) -> Result<Composed, String> {
         .iter()
         .filter_map(|e| e.style.as_ref().map(|s| ((e.from.clone(), e.to.clone()), matches!(s, LineStyle::Dashed))))
         .collect();
-    Ok(Composed { graph, hints: Hints { kinds, placement, sizes, gravity: true, pull_sources: false }, nodes, groups, warnings, line })
+    Ok(Composed { graph, hints: Hints { kinds, placement, sizes, gravity: true, pull_sources: false, join_ports: join_ports(input.join_ports) }, nodes, groups, warnings, line })
 }
