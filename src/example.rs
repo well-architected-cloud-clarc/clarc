@@ -81,7 +81,7 @@ pub fn example_text(theme: Theme) -> String {
     let (aws_url, azure_url) = (catalog::glyph_list_url(Theme::Aws), catalog::glyph_list_url(Theme::Azure));
     format!(
         "{json}\n\n\
-Hint directives (keys of an entry in \"hints\", keyed by the node they are about; suggestions that are honoured when possible):\n{directives}\n\n\
+Hint directives (keys of an entry in \"hints\", keyed by the node they are about; suggestions that are honoured when possible; they also place nodes without data edges and nodes of different groups):\n{directives}\n\n\
 Optional top-level \"joinPorts\" (applies to all nodes; use it when many edges crowd a node):\n{joins}\n\n\
 Node \"service\" is the name of a drawio glyph of the {theme} provider. Case, `-` and `_` do not matter; an unknown name is an error with suggestions. Without a service the node is a text box, as is \"note\".\n\
 Full lists of glyph names (aws, azure):\n  {aws_url}\n  {azure_url}\n\
