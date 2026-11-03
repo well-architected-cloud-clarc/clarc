@@ -337,3 +337,12 @@ fn joined_edges_render_without_warnings() {
 fn unknown_join_mode_is_an_error() {
     assert!(clarc::parse(r#"{"joinPorts":"some","nodes":[]}"#).is_err());
 }
+
+#[test]
+fn reference_architectures_have_no_crossings() {
+    CASES.iter().for_each(|(name, theme, _)| {
+        let r = clarc::render(&input(name), *theme).unwrap();
+        let crossings: Vec<_> = r.warnings.iter().filter(|w| w.starts_with("crossing")).collect();
+        assert!(crossings.is_empty(), "{name}: {crossings:?}");
+    });
+}
