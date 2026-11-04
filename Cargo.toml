@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-c43-layout = { git = "https://github.com/well-architected-cloud-clarc/c43-layout", rev = "d28d99677e194c0ab02a05ff0bd24c8621623a47" }
+c43-layout = { git = "https://github.com/well-architected-cloud-clarc/c43-layout", rev = "0bccc3d791e7b810c89ec4498547f5be9b0e6db4" }
 clap = { version = "4", features = ["derive"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["preserve_order", "float_roundtrip"] }
